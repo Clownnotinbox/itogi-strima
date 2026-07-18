@@ -1,0 +1,25 @@
+{
+  "channel": {
+    "name": "Итоги стрима",
+    "handle": "",
+    "tagline": "",
+    "accent": "#7c3742",
+    "accent2": "#56604b",
+    "platform_url": ""
+  },
+  "generated_at": null,
+  "stats": {
+    "streams": 0,
+    "phrases": 0
+  },
+  "current_day": null,
+  "current_day_label": "",
+  "current_stats": {
+    "streams": 0,
+    "phrases": 0
+  },
+  "days": [],
+  "streams": [],
+  "phrases": [],
+  "all_phrases": []
+}

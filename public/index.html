@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>Итоги стрима</title>
+  <meta name="description" content="Цитаты и таймкоды из стримов." />
+  <link rel="stylesheet" href="live.css" />
+</head>
+<body>
+  <header class="mast">
+    <div class="mast-line">
+      <span id="handle"></span>
+      <span id="count"></span>
+    </div>
+    <h1 class="mast-name" id="name"></h1>
+    <p class="mast-sub" id="sub"></p>
+  </header>
+
+  <nav class="nav" aria-label="Фильтр цитат"><div class="nav-in" id="filters"></div></nav>
+
+  <main class="index" id="index"></main>
+  <p class="none" id="none" hidden>Цитат пока нет.</p>
+
+  <footer class="colophon" id="colophon"></footer>
+  <script src="live.js"></script>
+</body>
+</html>

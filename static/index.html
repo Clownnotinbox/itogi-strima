@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>Стрим-цитаты</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="На главную">
+      <span class="brand-mark" aria-hidden="true">СЦ</span>
+      <span>
+        <strong>Стрим-цитаты</strong>
+        <small>Запись и отбор моментов</small>
+      </span>
+    </a>
+    <div class="status" id="health" role="status">
+      <span class="dot" id="health-dot" aria-hidden="true"></span>
+      <span id="health-text">Проверяем сервисы</span>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="work-grid" aria-label="Управление">
+      <div class="panel start-panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Новый запуск</p>
+            <h1>Добавить эфир</h1>
+          </div>
+        </div>
+        <p class="hint">Вставьте ссылку на запись или Twitch-канал. Каждая ссылка — с новой строки.</p>
+        <label class="sr-only" for="links">Ссылки на стримы</label>
+        <textarea id="links" spellcheck="false" placeholder="https://www.twitch.tv/channel&#10;https://www.youtube.com/watch?v=..."></textarea>
+        <div class="submit-row">
+          <button id="submit" class="primary">Начать обработку</button>
+          <span class="key-hint">Ctrl + Enter</span>
+        </div>
+        <div id="submit-msg" class="submit-msg" aria-live="polite"></div>
+      </div>
+
+      <div class="panel queue-panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Состояние</p>
+            <h2>В работе</h2>
+          </div>
+        </div>
+        <p class="hint">Текущая запись, расшифровка и отбор цитат.</p>
+        <div id="queue" class="queue"><div class="queue-empty">Активных задач нет.</div></div>
+      </div>
+    </section>
+
+    <details class="settings panel">
+      <summary>
+        <span>
+          <span class="eyebrow">Необязательно</span>
+          <strong>Публичная страница</strong>
+        </span>
+        <span class="summary-action">Настроить</span>
+      </summary>
+      <div class="settings-body">
+        <p class="hint">Укажите подпись страницы и опубликуйте готовые цитаты.</p>
+        <div class="settings-grid">
+          <label>Название<input id="ch-name" placeholder="Итоги стрима" /></label>
+          <label>Канал<input id="ch-handle" placeholder="@channel" /></label>
+          <label>Описание<input id="ch-tagline" placeholder="Короткая подпись" /></label>
+        </div>
+        <div class="publish-row">
+          <button id="ch-save" class="secondary">Сохранить</button>
+          <button id="publish" class="primary">Обновить страницу</button>
+          <a href="/live/" target="_blank" rel="noopener">Открыть страницу</a>
+          <a href="/api/site.html" download>Скачать HTML</a>
+        </div>
+        <div id="publish-msg" class="submit-msg" aria-live="polite"></div>
+      </div>
+    </details>
+
+    <section class="results">
+      <div class="results-head">
+        <div>
+          <p class="eyebrow">Результат</p>
+          <h2>Цитаты</h2>
+        </div>
+        <div class="results-tools">
+          <label class="sr-only" for="search">Поиск по цитатам</label>
+          <input id="search" type="search" placeholder="Поиск" />
+          <a id="export-all" href="/api/export/all.json" class="secondary" download>Скачать JSON</a>
+        </div>
+      </div>
+      <div id="collections" class="collections"></div>
+      <div id="empty" class="empty show">
+        <strong>Цитат пока нет</strong>
+        <p>Добавьте эфир — результаты появятся здесь.</p>
+      </div>
+    </section>
+  </main>
+
+  <span id="topn" hidden>5</span>
+
+  <template id="tpl-quote">
+    <figure class="quote">
+      <blockquote class="q-text"></blockquote>
+      <figcaption class="q-meta">
+        <a class="tc" target="_blank" rel="noopener"><span aria-hidden="true">▶</span><span class="tc-t"></span></a>
+        <span class="emo"></span>
+        <span class="tags"></span>
+        <span class="score" title="Оценка"><span class="score-bar"><i></i></span><b></b></span>
+      </figcaption>
+      <div class="reason"></div>
+    </figure>
+  </template>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
