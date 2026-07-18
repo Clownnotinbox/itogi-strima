@@ -1,5 +1,5 @@
 """Пайплайн: ссылка -> аудио (yt-dlp+ffmpeg) -> STT (faster-whisper) ->
-просодия (громкость) -> воронка фильтрации (эвристики + 2 прохода Ollama) -> топ-N фраз.
+просодия (громкость) -> общий отбор цитат (правила + Ollama) -> топ-N фраз.
 """
 import gc
 import glob
@@ -1318,6 +1318,30 @@ def rerank_live_quotes_with_llm(candidates: list[dict], max_candidates: int = 36
     return reranked
 
 
+def generate_quote_candidates(segments, loudness=None, limit: int = 120) -> list[dict]:
+    """Build context-aware candidates shared by live streams and saved recordings."""
+    return quick_live_quotes(segments, loudness, limit=limit)
+
+
+def finalize_quote_candidates(
+    candidates: list[dict],
+    *,
+    use_llm: bool,
+    limit: int | None = None,
+    max_llm_candidates: int = 36,
+    moment_gap_seconds: float = 18.0,
+) -> list[dict]:
+    """Apply the shared precision pass, moment dedupe and final ranking."""
+    pool = F.dedupe([dict(candidate) for candidate in candidates])
+    if use_llm and pool:
+        pool = rerank_live_quotes_with_llm(pool, max_candidates=max_llm_candidates)
+    pool = dedupe_live_moments(pool, gap_seconds=moment_gap_seconds)
+    pool.sort(key=lambda quote: quote.get("score") or 0, reverse=True)
+    if limit is None:
+        return pool
+    return pool[:limit]
+
+
 # ------------------------------------------------------------------- оркестрация
 def process_stream(stream_id: int, url: str, on_stage):
     """on_stage(status, message) — колбэк для обновления БД/UI."""
@@ -1336,9 +1360,18 @@ def process_stream(stream_id: int, url: str, on_stage):
             on_stage("done", "речь не распознана")
             return meta, []
 
-        on_stage("filtering", "ищу цитаты")
-        quotes = filter_funnel(
-            segments, words, loudness, meta, on_status=lambda m: on_stage("filtering", m)
+        on_stage("filtering", "ищу законченные мысли и добавляю контекст")
+        candidates = generate_quote_candidates(
+            segments,
+            loudness,
+            limit=max(120, TOP_N * 24),
+        )
+        on_stage("filtering", f"Ollama оценивает кандидатов: {len(candidates)}")
+        quotes = finalize_quote_candidates(
+            candidates,
+            use_llm=True,
+            limit=TOP_N,
+            max_llm_candidates=max(36, TOP_N * 8),
         )
         on_stage("done", f"готово: {len(quotes)} фраз")
         return meta, quotes

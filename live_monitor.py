@@ -351,7 +351,7 @@ def _rebuild_live_quotes(
                 loudness.append((point.get("start"), point.get("level", 0)))
             elif isinstance(point, (list, tuple)) and len(point) >= 2:
                 loudness.append((point[0], point[1]))
-        fresh = pipeline.quick_live_quotes(payload.get("segments") or [], loudness, limit=16)
+        fresh = pipeline.generate_quote_candidates(payload.get("segments") or [], loudness, limit=16)
         for q in fresh:
             key = " ".join(q["text"].lower().split())
             if not key:
@@ -369,16 +369,18 @@ def _rebuild_live_quotes(
                     elapsed_seconds = max(elapsed_seconds or 0, float(value))
                     break
 
-    if LIVE_USE_LLM and quotes:
-        try:
-            quotes = pipeline.rerank_live_quotes_with_llm(quotes)
-        except Exception as e:
-            stream = db.get_stream(stream_id)
-            msg = f"live: LLM-rerank не сработал ({e}); оставил быстрый отбор"
-            if stream and stream.get("status") != "done":
-                db.update_stream(stream_id, stage_msg=msg)
-
-    quotes = pipeline.dedupe_live_moments(quotes)
+    try:
+        quotes = pipeline.finalize_quote_candidates(
+            quotes,
+            use_llm=LIVE_USE_LLM,
+            limit=None,
+        )
+    except Exception as e:
+        quotes = pipeline.finalize_quote_candidates(quotes, use_llm=False, limit=None)
+        stream = db.get_stream(stream_id)
+        msg = f"live: LLM-rerank не сработал ({e}); оставил быстрый отбор"
+        if stream and stream.get("status") != "done":
+            db.update_stream(stream_id, stage_msg=msg)
 
     stream = db.get_stream(stream_id)
     elapsed_seconds = max(elapsed_seconds or 0, float((stream or existing_stream or {}).get("duration") or 0)) or None

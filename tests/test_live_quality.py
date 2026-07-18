@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 import pipeline
 
@@ -165,6 +166,68 @@ class LiveQuoteQualityTests(unittest.TestCase):
         self.assertIsNotNone(rhetorical)
         self.assertGreaterEqual(contrast["score"], 60)
         self.assertGreaterEqual(rhetorical["score"], 70)
+
+    def test_shared_candidate_builder_uses_context_aware_live_rules(self):
+        segments = [
+            {"text": "Проектор снова завис.", "start": 0, "end": 2},
+            {"text": "Зато есть время на чай.", "start": 2.2, "end": 4},
+        ]
+
+        quotes = pipeline.generate_quote_candidates(segments, limit=20)
+
+        self.assertTrue(
+            any("Проектор снова завис" in q["text"] and "время на чай" in q["text"] for q in quotes)
+        )
+
+    def test_shared_finalizer_runs_llm_pass_and_applies_limit(self):
+        candidates = [
+            {"text": "Первая законченная мысль для проверки", "score": 72, "t_start": 0},
+            {"text": "Вторая законченная мысль для проверки", "score": 68, "t_start": 30},
+        ]
+        reranked = [
+            {"text": "Вторая законченная мысль для проверки", "score": 91, "t_start": 30},
+            {"text": "Первая законченная мысль для проверки", "score": 84, "t_start": 0},
+        ]
+
+        with patch.object(pipeline, "rerank_live_quotes_with_llm", return_value=reranked) as rerank:
+            result = pipeline.finalize_quote_candidates(candidates, use_llm=True, limit=1)
+
+        rerank.assert_called_once()
+        self.assertEqual([q["text"] for q in result], ["Вторая законченная мысль для проверки"])
+
+    def test_saved_recording_uses_shared_quote_pipeline(self):
+        meta = {"wav": "recording.wav", "duration": 120}
+        segments = [
+            {"text": "Я пришёл отдыхать, но теперь устал от отдыха.", "start": 10, "end": 13}
+        ]
+        candidates = [{"text": "Я пришёл отдыхать, но теперь устал от отдыха", "score": 75}]
+        selected = [{"text": "Я пришёл отдыхать, но теперь устал от отдыха", "score": 88}]
+        stages = []
+
+        with (
+            patch.object(pipeline, "resolve_media_url", return_value="media-url"),
+            patch.object(pipeline, "download_audio", return_value=meta),
+            patch.object(pipeline, "transcribe", return_value=(segments, [])),
+            patch.object(pipeline, "save_transcript"),
+            patch.object(pipeline, "compute_loudness", return_value=[]),
+            patch.object(pipeline, "_free_model"),
+            patch.object(pipeline, "generate_quote_candidates", return_value=candidates) as generate,
+            patch.object(pipeline, "finalize_quote_candidates", return_value=selected) as finalize,
+            patch.object(pipeline, "filter_funnel") as old_filter,
+        ):
+            result_meta, result_quotes = pipeline.process_stream(
+                7,
+                "https://example.test/video",
+                lambda *args: stages.append(args),
+            )
+
+        generate.assert_called_once()
+        finalize.assert_called_once()
+        self.assertTrue(finalize.call_args.kwargs["use_llm"])
+        old_filter.assert_not_called()
+        self.assertEqual(result_meta, meta)
+        self.assertEqual(result_quotes, selected)
+        self.assertEqual(stages[-1][:2], ("done", "готово: 1 фраз"))
 
 
 if __name__ == "__main__":
