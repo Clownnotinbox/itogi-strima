@@ -1,8 +1,11 @@
 "use strict";
-/* Публичная страница читает готовые цитаты из data.json. */
+/* Публичная витрина: только показ готовых фраз. Данные — window.__DATA__ (самодостаточный
+   экспорт) или data.json рядом. Ноль операций. Редакторский нумерованный индекс. */
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const words = (s) => (s || "").trim().split(/\s+/).length;
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const STATE = { phrases: [], emo: "все", dayLabel: "" };
 
 function shade(hex, f) {
@@ -23,6 +26,7 @@ async function boot() {
   STATE.dayLabel = data.current_day_label || "";
   applyChannel(data.channel || {}, stats, STATE.dayLabel);
   STATE.phrases = data.phrases;
+  buildStrip(data.phrases);
   buildFilters(data.phrases);
   render();
   // подвал — только данные: хэндл стримера и дата сборки
@@ -44,6 +48,14 @@ function applyChannel(ch, stats, dayLabel) {
   document.title = ch.name || "Итоги стрима";
 }
 
+function buildStrip(phrases) {
+  const short = phrases.filter((p) => words(p.text) <= 7).slice(0, 16);
+  const pool = short.length >= 5 ? short : phrases.slice(0, 16);
+  if (!pool.length) { $(".strip").style.display = "none"; return; }
+  const run = () => pool.map((p) => `<span class="s-item" data-link="${esc(p.link)}">${esc(p.text)}</span>`).join("");
+  $("#strip").innerHTML = run() + run();
+}
+
 function buildFilters(phrases) {
   const counts = {};
   phrases.forEach((p) => { if (p.emotion) counts[p.emotion] = (counts[p.emotion] || 0) + 1; });
@@ -58,6 +70,16 @@ function render() {
   $("#none").hidden = list.length !== 0;
   $("#index").innerHTML = list.map(entry).join("");
 
+  const io = new IntersectionObserver((ents, obs) => {
+    ents.forEach((en, i) => {
+      if (en.isIntersecting) {
+        en.target.style.transitionDelay = Math.min(i * 35, 210) + "ms";
+        en.target.classList.add("in");
+        obs.unobserve(en.target);
+      }
+    });
+  }, { rootMargin: "0px 0px -6% 0px" });
+  $("#index").querySelectorAll(".entry").forEach((e) => (REDUCED ? e.classList.add("in") : io.observe(e)));
 }
 
 function entry(p, i) {
@@ -75,10 +97,13 @@ function entry(p, i) {
 
 document.addEventListener("click", (e) => {
   const f = e.target.closest(".f");
+  const s = e.target.closest(".s-item");
   if (f) {
     STATE.emo = f.dataset.emo;
     $("#filters").querySelectorAll(".f").forEach((b) => b.classList.toggle("on", b === f));
     render();
+  } else if (s && s.dataset.link) {
+    window.open(s.dataset.link, "_blank", "noopener");
   }
 });
 

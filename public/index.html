@@ -3,12 +3,17 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="light" />
   <title>Итоги стрима</title>
-  <meta name="description" content="Цитаты и таймкоды из стримов." />
+  <meta name="description" content="Лучшие цитаты и итоги стрима." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,900;1,9..144,500&family=Space+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="live.css" />
 </head>
 <body>
+  <div class="paper" aria-hidden="true"></div>
+
+  <!-- ШАПКА-МАСТХЕД -->
   <header class="mast">
     <div class="mast-line">
       <span id="handle"></span>
@@ -18,12 +23,19 @@
     <p class="mast-sub" id="sub"></p>
   </header>
 
-  <nav class="nav" aria-label="Фильтр цитат"><div class="nav-in" id="filters"></div></nav>
+  <!-- ТОНКАЯ ЛЕНТА (одна строка, плоский текст) -->
+  <div class="strip" aria-hidden="true"><div class="strip-run" id="strip"></div></div>
 
+  <!-- ФИЛЬТР-НАВИГАЦИЯ (текстовые ссылки) -->
+  <nav class="nav"><div class="nav-in" id="filters"></div></nav>
+
+  <!-- НУМЕРОВАННЫЙ ИНДЕКС ФРАЗ -->
   <main class="index" id="index"></main>
-  <p class="none" id="none" hidden>Цитат пока нет.</p>
+  <p class="none" id="none" hidden>ничего не нашлось.</p>
 
+  <!-- КОЛОФОН -->
   <footer class="colophon" id="colophon"></footer>
+
   <script src="live.js"></script>
 </body>
 </html>

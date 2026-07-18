@@ -222,6 +222,7 @@ function copyStream(s) {
 // ------------------------------------------------------------------- цикл
 let LAST = [];
 let WATCHES = [];
+let CHANNEL_COLORS = { accent: "#e8b04b", accent2: "#7bdcff" };
 async function refresh() {
   try {
     const [streams, watches] = await Promise.all([
@@ -276,6 +277,10 @@ async function loadChannel() {
     $("#ch-name").value = c.name || "";
     $("#ch-handle").value = c.handle || "";
     $("#ch-tagline").value = c.tagline || "";
+    CHANNEL_COLORS = {
+      accent: c.accent || CHANNEL_COLORS.accent,
+      accent2: c.accent2 || CHANNEL_COLORS.accent2,
+    };
   } catch {}
 }
 
@@ -284,8 +289,8 @@ async function saveChannel() {
     name: $("#ch-name").value.trim() || "Итоги стрима",
     handle: $("#ch-handle").value.trim(),
     tagline: $("#ch-tagline").value.trim(),
-    accent: "#7c3742",
-    accent2: "#56604b",
+    accent: CHANNEL_COLORS.accent,
+    accent2: CHANNEL_COLORS.accent2,
   };
   const btn = $("#ch-save");
   btn.textContent = "…";

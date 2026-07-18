@@ -11,8 +11,8 @@ DEFAULT_CHANNEL = {
     "name": "Итоги стрима",
     "handle": "",
     "tagline": "",
-    "accent": "#7c3742",
-    "accent2": "#56604b",
+    "accent": "#e8b04b",
+    "accent2": "#7bdcff",
     "platform_url": "",
 }
 
